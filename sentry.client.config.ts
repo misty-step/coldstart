@@ -6,28 +6,47 @@ import * as Sentry from "@sentry/nextjs";
  * Error tracking and performance monitoring for the browser.
  */
 
-const SENTRY_DSN = process.env.NEXT_PUBLIC_SENTRY_DSN;
+Sentry.init({
+  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
 
-if (SENTRY_DSN) {
-  Sentry.init({
-    dsn: SENTRY_DSN,
+  // Adjust this value in production to control sampling
+  tracesSampleRate: process.env.NODE_ENV === "production" ? 0.1 : 1.0,
 
-    // Adjust this value in production, or use tracesSampler for greater control
-    tracesSampleRate: process.env.NODE_ENV === "production" ? 0.1 : 1.0,
+  // Sample rate for profiling
+  profilesSampleRate: process.env.NODE_ENV === "production" ? 0.1 : 1.0,
 
-    // Setting this option to true will print useful information to the console
-    debug: process.env.NODE_ENV === "development",
+  // Replay sampling rates
+  replaysSessionSampleRate: 0.1,
+  replaysOnErrorSampleRate: 1.0,
 
-    // Replay configuration
-    replaysOnErrorSampleRate: 1.0,
-    replaysSessionSampleRate: 0.1,
+  // Register Replay integration
+  integrations: [
+    Sentry.replayIntegration({
+      maskAllText: false,
+      blockAllMedia: false,
+    }),
+  ],
 
-    // Before send hook to filter out certain errors
-    beforeSend(event) {
-      // Filter out specific errors if needed
-      return event;
-    },
-  });
-} else {
-  console.warn("Sentry DSN not configured - error tracking disabled");
-}
+  // Environment
+  environment: process.env.NODE_ENV,
+
+  // Enable debug in development
+  debug: process.env.NODE_ENV === "development",
+
+  // Before sending, filter sensitive data
+  beforeSend(event) {
+    // Sanitize URLs to remove PII
+    if (event.request?.url) {
+      try {
+        const url = new URL(event.request.url);
+        // Remove sensitive query params
+        url.searchParams.delete("token");
+        url.searchParams.delete("code");
+        event.request.url = url.toString();
+      } catch {
+        // URL parsing failed, leave as is
+      }
+    }
+    return event;
+  },
+});

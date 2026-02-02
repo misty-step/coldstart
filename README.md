@@ -14,6 +14,24 @@ An opinionated Next.js starter for shipping fast. The Misty Step stack.
 - **Styling:** [Tailwind CSS](https://tailwindcss.com/)
 - **Testing:** Vitest (unit), Playwright (e2e)
 
+## Feature Status
+
+- ✅ Working - Fully integrated and tested
+- 🚧 Scaffold - Code exists but needs configuration
+- 📋 Planned - On roadmap
+
+- ✅ Next.js App Router
+- ✅ TypeScript strict
+- 🚧 Convex database - run `npx convex dev` to generate types, set `.env.local`
+- 🚧 Clerk auth - webhook handler ready, needs `.env.local` + dashboard config
+- 🚧 Stripe payments - webhook + checkout ready, needs `.env.local` + products
+- 🚧 PostHog analytics - provider ready, needs API key
+- 🚧 Sentry errors - config ready, needs DSN
+- ✅ Tailwind CSS
+- ✅ Vitest testing
+- 🚧 Playwright e2e - config ready, needs tests
+- ✅ CI/CD - GitHub Actions
+
 ## Tenets
 
 - **Simplicity** - Keep it simple, avoid over-engineering
@@ -24,19 +42,25 @@ An opinionated Next.js starter for shipping fast. The Misty Step stack.
 
 ## Quick Start
 
-```bash
-# Clone and install
-git clone <repo-url> my-app
-cd my-app
-npm install
-
-# Set up environment variables
-cp .env.example .env.local
-# Edit .env.local with your values
-
-# Run development server
-npm run dev
-```
+1. Clone
+    ```bash
+    git clone <repo-url> my-app
+    cd my-app
+    ```
+2. Install
+    ```bash
+    bun install
+    ```
+3. Copy env
+    ```bash
+    cp .env.example .env.local
+    ```
+4. Configure services (Convex, Clerk, Stripe - each needs dashboard setup)
+5. Run
+    ```bash
+    bun run dev
+    npx convex dev
+    ```
 
 Open [http://localhost:3000](http://localhost:3000) to see the result.
 

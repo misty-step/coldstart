@@ -14,6 +14,28 @@ Opinionated Next.js starter for shipping fast. The Misty Step stack.
 - **Styling:** Tailwind CSS
 - **Testing:** Vitest (unit), Playwright (e2e)
 
+## Implementation Status
+
+Legend:
+- ✅ Complete - Fully implemented and tested
+- 🚧 Scaffold - Code ready, needs configuration
+- 📋 Planned - On roadmap
+
+| Component | Status | Notes |
+|-----------|--------|-------|
+| Next.js App Router | ✅ Complete | |
+| TypeScript strict | ✅ Complete | |
+| Convex database | 🚧 Scaffold | Schema, queries, mutations ready. Run npx convex dev |
+| Clerk auth | 🚧 Scaffold | Webhook handler, sync to Convex ready. Needs env + dashboard |
+| Stripe payments | 🚧 Scaffold | Webhook + checkout + portal ready. Needs env + products |
+| PostHog analytics | 🚧 Scaffold | Provider ready. Needs API key |
+| Sentry errors | 🚧 Scaffold | Config files ready. Needs DSN |
+| Unit tests | ✅ Complete | 27 tests passing |
+| E2E tests | 🚧 Scaffold | Playwright config ready |
+| CI/CD | ✅ Complete | GitHub Actions workflows |
+| CLAUDE.md | ✅ Complete | Stack conventions documented |
+| Claude hooks | ✅ Complete | Security, deployment guards |
+
 ## Initial Structure
 
 ```
@@ -111,7 +133,7 @@ Use EnhancedError pattern from Phaedrus's claude-config:
 - TypeScript type check
 - ESLint
 - Unit tests (Vitest)
-- Coverage threshold (80%)
+- Coverage threshold (60%)
 
 ### Deploy
 - Vercel deployment

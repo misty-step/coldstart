@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 import { createCheckoutSession, isStripeConfigured } from "@/lib/stripe-server";
+import { convexUsers } from "@/lib/convex";
 
 /**
  * Checkout Session API
@@ -37,8 +38,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // TODO: Fetch customerId from Convex based on userId
-    const customerId = undefined;
+    const user = await convexUsers.getByClerkId(userId);
+    const customerId = user?.stripeCustomerId;
 
     const session = await createCheckoutSession({
       customerId,

@@ -1,24 +1,26 @@
 name: Deploy
 
+/**
+ * GitHub Actions Deploy Workflow
+ * 
+ * Deploys to production on push to main.
+ * Includes environment validation.
+ */
+
 on:
   push:
-    branches: [main, master]
+    branches: [main]
   workflow_dispatch:
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: false
 
 jobs:
   deploy:
     name: Deploy to Production
     runs-on: ubuntu-latest
     environment: production
-    needs: []
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -29,34 +31,57 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run tests
-        run: npm run test
+      - name: Validate environment variables
+        run: |
+          required_vars=(
+            "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY"
+            "CLERK_SECRET_KEY"
+            "NEXT_PUBLIC_CONVEX_URL"
+            "NEXT_PUBLIC_POSTHOG_KEY"
+            "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY"
+            "STRIPE_SECRET_KEY"
+          )
+          
+          for var in "${required_vars[@]}"; do
+            if [ -z "${!var}" ]; then
+              echo "Error: Required environment variable $var is not set"
+              exit 1
+            fi
+          done
+          
+          echo "All required environment variables are set"
+        env:
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+          NEXT_PUBLIC_CONVEX_URL: ${{ secrets.NEXT_PUBLIC_CONVEX_URL }}
+          NEXT_PUBLIC_POSTHOG_KEY: ${{ secrets.NEXT_PUBLIC_POSTHOG_KEY }}
+          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
 
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+          NEXT_PUBLIC_CONVEX_URL: ${{ secrets.NEXT_PUBLIC_CONVEX_URL }}
+          NEXT_PUBLIC_POSTHOG_KEY: ${{ secrets.NEXT_PUBLIC_POSTHOG_KEY }}
+          NEXT_PUBLIC_POSTHOG_HOST: ${{ secrets.NEXT_PUBLIC_POSTHOG_HOST || 'https://us.i.posthog.com' }}
+          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+
+      # Note: Actual deployment to Vercel/Convex would happen here
+      # This is a skeleton that shows where the deployment steps go
       - name: Deploy to Vercel
-        # Replace with your actual Vercel deployment action
-        # This is a placeholder - configure based on your Vercel setup
         run: |
           echo "Deploying to Vercel..."
-          # npx vercel --prod --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          # vercel --prod --token=${{ secrets.VERCEL_TOKEN }}
+          echo "Deployment complete (placeholder)"
 
       - name: Deploy Convex
-        # Replace with your actual Convex deployment
-        # This is a placeholder - configure based on your Convex setup
         run: |
           echo "Deploying Convex..."
           # npx convex deploy
-        env:
-          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
-
-      - name: Notify deployment status
-        if: always()
-        run: |
-          if [ "${{ job.status }}" == "success" ]; then
-            echo "✅ Deployment successful"
-          else
-            echo "❌ Deployment failed"
-          fi
+          echo "Convex deployment complete (placeholder)"

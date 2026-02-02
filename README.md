@@ -1,36 +1,141 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Cold Start
 
-## Getting Started
+An opinionated Next.js starter for shipping fast. The Misty Step stack.
 
-First, run the development server:
+## Stack
+
+- **Framework:** [Next.js 14+](https://nextjs.org/) (App Router)
+- **Language:** TypeScript (strict mode)
+- **Database:** [Convex](https://convex.dev/) (real-time)
+- **Auth:** [Clerk](https://clerk.com/)
+- **Payments:** [Stripe](https://stripe.com/)
+- **Analytics:** [PostHog](https://posthog.com/)
+- **Errors:** [Sentry](https://sentry.io/)
+- **Styling:** [Tailwind CSS](https://tailwindcss.com/)
+- **Testing:** Vitest (unit), Playwright (e2e)
+
+## Tenets
+
+- **Simplicity** - Keep it simple, avoid over-engineering
+- **Modularity** - Components and functions are self-contained
+- **Explicitness** - Code is clear about what it does
+- **Maintainability** - Easy to understand and modify
+- **Observability** - Comprehensive logging and monitoring
+
+## Quick Start
 
 ```bash
+# Clone and install
+git clone <repo-url> my-app
+cd my-app
+npm install
+
+# Set up environment variables
+cp .env.example .env.local
+# Edit .env.local with your values
+
+# Run development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Development
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+# Start development server
+npm run dev
 
-## Learn More
+# Run type check
+npm run type-check
 
-To learn more about Next.js, take a look at the following resources:
+# Run linter
+npm run lint
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# Run unit tests
+npm run test
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# Run unit tests with coverage
+npm run test:coverage
 
-## Deploy on Vercel
+# Run e2e tests
+npm run test:e2e
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+# Run e2e tests with UI
+npm run test:e2e:ui
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Project Structure
+
+```
+coldstart/
+├── src/
+│   ├── app/                 # Next.js App Router
+│   │   ├── (auth)/         # Auth route group
+│   │   ├── (dashboard)/    # Dashboard route group
+│   │   └── api/            # API routes
+│   ├── components/
+│   │   ├── ui/             # UI components
+│   │   └── providers/      # Context providers
+│   └── lib/                # Utility functions
+├── convex/                 # Convex database
+│   ├── functions/          # Convex functions
+│   ├── schema.ts           # Database schema
+│   └── http.ts             # HTTP actions
+├── tests/
+│   ├── unit/               # Vitest unit tests
+│   └── e2e/                # Playwright e2e tests
+└── .github/workflows/      # CI/CD workflows
+```
+
+## Configuration
+
+### Convex
+
+1. Create a project at [convex.dev](https://convex.dev/)
+2. Run `npx convex dev` to start the dev server
+3. Copy the deployment URL to `NEXT_PUBLIC_CONVEX_URL`
+
+### Clerk
+
+1. Create an application at [clerk.com](https://clerk.com/)
+2. Copy the Publishable Key and Secret Key to your `.env.local`
+3. Configure the webhook URL in Clerk dashboard
+
+### Stripe
+
+1. Create an account at [stripe.com](https://stripe.com/)
+2. Copy your API keys to `.env.local`
+3. Create products and prices in the Stripe dashboard
+4. Copy price IDs to `STRIPE_PRICE_ID_PRO` and `STRIPE_PRICE_ID_TEAM`
+5. Configure webhook endpoint to `/api/webhooks/stripe`
+
+### PostHog
+
+1. Create a project at [posthog.com](https://posthog.com/)
+2. Copy the Project API Key to `NEXT_PUBLIC_POSTHOG_KEY`
+
+### Sentry
+
+1. Create a project at [sentry.io](https://sentry.io/)
+2. Copy the DSN to `SENTRY_DSN`
+3. Create an auth token for source map uploads
+
+## CI/CD
+
+GitHub Actions workflows are configured for:
+
+- **CI** (`.github/workflows/ci.yml`): Runs on PRs
+  - TypeScript type checking
+  - ESLint
+  - Unit tests with 80% coverage threshold
+  - Build verification
+
+- **Deploy** (`.github/workflows/deploy.yml`): Runs on main branch
+  - Environment validation
+  - Build and deploy to production
+  - Convex deployment
+
+## License
+
+MIT

@@ -1,7 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 import { createCheckoutSession, isStripeConfigured } from "@/lib/stripe-server";
-import { convexUsers } from "@/lib/convex";
+import { convexUsers, isValidAppUrl } from "@/lib/convex";
 
 /**
  * Checkout Session API
@@ -34,6 +34,13 @@ export async function POST(request: NextRequest) {
     if (!priceId || !successUrl || !cancelUrl) {
       return NextResponse.json(
         { error: "Missing required fields: priceId, successUrl, cancelUrl" },
+        { status: 400 }
+      );
+    }
+
+    if (!isValidAppUrl(successUrl) || !isValidAppUrl(cancelUrl)) {
+      return NextResponse.json(
+        { error: "Invalid redirect URL" },
         { status: 400 }
       );
     }

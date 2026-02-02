@@ -1,6 +1,6 @@
 import type { MutationCtx } from "convex/server";
 import { v } from "convex/values";
-import { query, mutation, internalMutation } from "../_generated/server";
+import { query, internalMutation } from "../_generated/server";
 
 /**
  * User queries and mutations
@@ -99,15 +99,6 @@ const createUser = async (ctx: MutationCtx, args: CreateUserArgs) => {
   return await ctx.db.insert("users", user);
 };
 
-/**
- * Create a new user (called during sign-up via Clerk webhook)
- */
-export const create = mutation({
-  args: createUserArgs,
-  returns: v.id("users"),
-  handler: createUser,
-});
-
 export const createInternal = internalMutation({
   args: createUserArgs,
   returns: v.id("users"),
@@ -145,15 +136,6 @@ const updateUser = async (ctx: MutationCtx, args: UpdateUserArgs) => {
   return true;
 };
 
-/**
- * Update user profile
- */
-export const update = mutation({
-  args: updateUserArgs,
-  returns: v.boolean(),
-  handler: updateUser,
-});
-
 export const updateInternal = internalMutation({
   args: updateUserArgs,
   returns: v.boolean(),
@@ -163,7 +145,7 @@ export const updateInternal = internalMutation({
 /**
  * Update Stripe customer ID
  */
-export const updateStripeCustomerId = mutation({
+export const updateStripeCustomerId = internalMutation({
   args: {
     clerkId: v.string(),
     stripeCustomerId: v.string(),
@@ -190,7 +172,7 @@ export const updateStripeCustomerId = mutation({
 /**
  * Update subscription status
  */
-export const updateSubscription = mutation({
+export const updateSubscription = internalMutation({
   args: {
     stripeCustomerId: v.string(),
     stripeSubscriptionId: v.optional(v.string()),
@@ -206,7 +188,10 @@ export const updateSubscription = mutation({
       .unique();
 
     if (user === null) {
-      throw new Error("User not found");
+      console.warn(
+        `updateSubscription: No user found for stripeCustomerId ${args.stripeCustomerId}`
+      );
+      return false;
     }
 
     await ctx.db.patch(user._id, {
@@ -235,15 +220,6 @@ const removeUser = async (ctx: MutationCtx, args: RemoveUserArgs) => {
   await ctx.db.delete(user._id);
   return true;
 };
-
-/**
- * Delete user (called on Clerk user.deleted webhook)
- */
-export const remove = mutation({
-  args: removeUserArgs,
-  returns: v.boolean(),
-  handler: removeUser,
-});
 
 export const removeInternal = internalMutation({
   args: removeUserArgs,

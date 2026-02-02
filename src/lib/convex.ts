@@ -19,6 +19,22 @@ export const getConvexClient = (): ConvexHttpClient => {
   return convexClient;
 };
 
+/**
+ * Validate URL belongs to the application domain.
+ * Prevents open redirect attacks in checkout/portal flows.
+ */
+export const isValidAppUrl = (url: string): boolean => {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+  if (!appUrl) return true; // Skip validation if not configured
+  try {
+    const parsed = new URL(url);
+    const allowed = new URL(appUrl);
+    return parsed.origin === allowed.origin;
+  } catch {
+    return false;
+  }
+};
+
 export interface ConvexUser {
   _id: string;
   clerkId: string;
@@ -32,9 +48,22 @@ export interface ConvexUser {
   updatedAt: number;
 }
 
+// Lazy-load API module once (not on every call)
+let apiModule: typeof import("../../convex/_generated/api") | null = null;
+const getApi = async () => {
+  if (!apiModule) {
+    apiModule = await import("../../convex/_generated/api");
+  }
+  return apiModule.api;
+};
+
+/**
+ * Server-side Convex user operations.
+ * Note: Mutations should only be called from server-side code (API routes, webhooks).
+ */
 export const convexUsers = {
   async getByClerkId(clerkId: string): Promise<ConvexUser | null> {
-    const { api } = await import("../../convex/_generated/api");
+    const api = await getApi();
     const convex = getConvexClient();
     return convex.query(api.functions.users.getByClerkId, { clerkId });
   },
@@ -44,35 +73,8 @@ export const convexUsers = {
     stripeSubscriptionId?: string;
     status?: string;
   }): Promise<boolean> {
-    const { api } = await import("../../convex/_generated/api");
+    const api = await getApi();
     const convex = getConvexClient();
     return convex.mutation(api.functions.users.updateSubscription, args);
-  },
-
-  async create(args: {
-    clerkId: string;
-    email: string;
-    name?: string;
-    imageUrl?: string;
-  }): Promise<string> {
-    const { api } = await import("../../convex/_generated/api");
-    const convex = getConvexClient();
-    return convex.mutation(api.functions.users.create, args);
-  },
-
-  async update(args: {
-    clerkId: string;
-    name?: string;
-    imageUrl?: string;
-  }): Promise<boolean> {
-    const { api } = await import("../../convex/_generated/api");
-    const convex = getConvexClient();
-    return convex.mutation(api.functions.users.update, args);
-  },
-
-  async remove(clerkId: string): Promise<boolean> {
-    const { api } = await import("../../convex/_generated/api");
-    const convex = getConvexClient();
-    return convex.mutation(api.functions.users.remove, { clerkId });
   },
 };

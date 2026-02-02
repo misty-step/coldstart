@@ -26,11 +26,20 @@ export async function POST(req: Request) {
     if (!stripe) {
       throw new Error("Stripe not configured");
     }
-    
+
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    if (!webhookSecret) {
+      console.error("Missing STRIPE_WEBHOOK_SECRET");
+      return NextResponse.json(
+        { error: "Server misconfigured" },
+        { status: 500 }
+      );
+    }
+
     const event = stripe.webhooks.constructEvent(
       body,
       signature,
-      process.env.STRIPE_WEBHOOK_SECRET!
+      webhookSecret
     );
 
     console.log(`Processing Stripe webhook: ${event.type}`);

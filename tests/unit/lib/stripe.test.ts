@@ -26,7 +26,7 @@ describe("Stripe Client", () => {
   });
 
   it("should load Stripe when key is configured", async () => {
-    const mockStripe = { id: "mock-stripe" } as unknown as ReturnType<typeof loadStripe>;
+    const mockStripe = { id: "mock-stripe" } as unknown as Awaited<ReturnType<typeof loadStripe>>;
     vi.mocked(loadStripe).mockResolvedValue(mockStripe);
 
     const originalKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;

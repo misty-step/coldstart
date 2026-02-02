@@ -1,5 +1,8 @@
 import Stripe from "stripe";
 
+// Re-export for webhook handler
+export { Stripe };
+
 /**
  * Stripe Server
  * 
@@ -10,7 +13,7 @@ const secretKey = process.env.STRIPE_SECRET_KEY;
 
 export const stripe = secretKey
   ? new Stripe(secretKey, {
-      apiVersion: "2025-01-27.acacia",
+      apiVersion: "2024-12-18.acacia" as Stripe.LatestApiVersion,
       typescript: true,
     })
   : null;

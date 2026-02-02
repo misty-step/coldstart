@@ -3,7 +3,7 @@ name: CI
 /**
  * GitHub Actions CI Workflow
  * 
- * Runs on every PR and push to main:
+ * Runs on every PR and push to master:
  * - TypeScript type checking
  * - ESLint
  * - Unit tests with coverage (80% threshold)
@@ -12,9 +12,9 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [master]
   pull_request:
-    branches: [main]
+    branches: [master]
 
 jobs:
   lint-and-typecheck:
@@ -25,20 +25,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: "20"
-          cache: "npm"
+          bun-version: latest
 
       - name: Install dependencies
-        run: npm ci
+        run: bun install
 
       - name: TypeScript type check
-        run: npm run type-check
+        run: bun run type-check
 
       - name: ESLint
-        run: npm run lint
+        run: bun run lint
 
   unit-tests:
     name: Unit Tests
@@ -48,24 +47,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: "20"
-          cache: "npm"
+          bun-version: latest
 
       - name: Install dependencies
-        run: npm ci
+        run: bun install
 
       - name: Run unit tests with coverage
-        run: npm run test:coverage
+        run: bun run test:coverage
         env:
           NEXT_PUBLIC_POSTHOG_KEY: test-key
           NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: pk_test_123
 
       - name: Upload coverage reports
         uses: codecov/codecov-action@v3
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         with:
           files: ./coverage/lcov.info
           fail_ci_if_error: false
@@ -79,20 +77,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: "20"
-          cache: "npm"
+          bun-version: latest
 
       - name: Install dependencies
-        run: npm ci
+        run: bun install
 
       - name: Build
-        run: npm run build
+        run: bun run build
         env:
           # Dummy values for build verification
-          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_123
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_b2JqZWN0aXZlLWNhbmFyeS0xMjMuY2xlcmsuYWNjb3VudHMuZGV2JA
           CLERK_SECRET_KEY: sk_test_123
           NEXT_PUBLIC_CONVEX_URL: https://test.convex.cloud
           NEXT_PUBLIC_POSTHOG_KEY: test-key

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
-import { constructStripeEvent, stripe } from "@/lib/stripe";
+import { stripe } from "@/lib/stripe-server";
+import Stripe from "stripe";
 
 /**
  * POST /api/webhooks/stripe
@@ -21,7 +22,11 @@ export async function POST(req: Request) {
   }
 
   try {
-    const event = constructStripeEvent(
+    if (!stripe) {
+      throw new Error("Stripe not configured");
+    }
+    
+    const event = stripe.webhooks.constructEvent(
       body,
       signature,
       process.env.STRIPE_WEBHOOK_SECRET!
@@ -52,7 +57,7 @@ export async function POST(req: Request) {
       }
 
       case "invoice.payment_succeeded": {
-        const invoice = event.data.object;
+        const invoice = event.data.object as Stripe.Invoice & { subscription?: string };
         
         // Update subscription status
         if (invoice.subscription) {
@@ -62,7 +67,7 @@ export async function POST(req: Request) {
       }
 
       case "invoice.payment_failed": {
-        const invoice = event.data.object;
+        const invoice = event.data.object as Stripe.Invoice & { subscription?: string };
         
         // Handle failed payment
         console.log(`Payment failed for subscription: ${invoice.subscription}`);

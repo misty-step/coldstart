@@ -3,13 +3,13 @@ name: Deploy
 /**
  * GitHub Actions Deploy Workflow
  * 
- * Deploys to production on push to main.
+ * Deploys to production on push to master.
  * Includes environment validation.
  */
 
 on:
   push:
-    branches: [main]
+    branches: [master]
   workflow_dispatch:
 
 jobs:
@@ -22,14 +22,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: "20"
-          cache: "npm"
+          bun-version: latest
 
       - name: Install dependencies
-        run: npm ci
+        run: bun install
 
       - name: Validate environment variables
         run: |
@@ -59,7 +58,7 @@ jobs:
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
 
       - name: Build
-        run: npm run build
+        run: bun run build
         env:
           NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
           CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
@@ -83,5 +82,5 @@ jobs:
       - name: Deploy Convex
         run: |
           echo "Deploying Convex..."
-          # npx convex deploy
+          # bunx convex deploy
           echo "Convex deployment complete (placeholder)"

@@ -1,5 +1,6 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { UserButton } from "@clerk/nextjs";
 
 /**
@@ -28,26 +29,51 @@ export default async function DashboardPage() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h2 className="text-lg font-medium text-gray-900 mb-4">
-            Welcome, {user?.firstName || "User"}!
-          </h2>
-          <p className="text-gray-600 mb-4">
-            This is your protected dashboard. You&apos;re successfully authenticated.
-          </p>
-          
-          <div className="border-t border-gray-200 pt-4 mt-4">
-            <h3 className="text-sm font-medium text-gray-700 mb-2">Your Info:</h3>
-            <dl className="space-y-2 text-sm">
-              <div>
-                <dt className="text-gray-500">Email:</dt>
-                <dd className="text-gray-900">{user?.emailAddresses[0]?.emailAddress}</dd>
-              </div>
-              <div>
-                <dt className="text-gray-500">User ID:</dt>
-                <dd className="text-gray-900 font-mono">{userId}</dd>
-              </div>
-            </dl>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {/* Welcome Card */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 md:col-span-2 lg:col-span-2">
+            <h2 className="text-lg font-medium text-gray-900 mb-4">
+              Welcome, {user?.firstName || "User"}!
+            </h2>
+            <p className="text-gray-600 mb-4">
+              This is your protected dashboard. You&apos;re successfully authenticated
+              with Cold Start.
+            </p>
+            
+            <div className="border-t border-gray-200 pt-4 mt-4">
+              <h3 className="text-sm font-medium text-gray-700 mb-2">Your Info:</h3>
+              <dl className="space-y-2 text-sm">
+                <div>
+                  <dt className="text-gray-500">Email:</dt>
+                  <dd className="text-gray-900">{user?.emailAddresses[0]?.emailAddress}</dd>
+                </div>
+                <div>
+                  <dt className="text-gray-500">User ID:</dt>
+                  <dd className="text-gray-900 font-mono text-xs">{userId}</dd>
+                </div>
+              </dl>
+            </div>
+          </div>
+
+          {/* Quick Actions */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h2 className="text-lg font-medium text-gray-900 mb-4">
+              Quick Actions
+            </h2>
+            <div className="space-y-3">
+              <Link
+                href="/dashboard/billing"
+                className="block w-full text-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+              >
+                Manage Billing
+              </Link>
+              <button
+                disabled
+                className="block w-full text-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-400 bg-gray-50 cursor-not-allowed"
+              >
+                Settings (Coming Soon)
+              </button>
+            </div>
           </div>
         </div>
       </main>

@@ -1,7 +1,9 @@
-import { auth, currentUser } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
+"use client";
+
+import { useEffect } from "react";
 import Link from "next/link";
-import { UserButton } from "@clerk/nextjs";
+import { useUser, UserButton } from "@clerk/nextjs";
+import { identifyUser, trackUserActivated } from "@/lib/posthog";
 
 /**
  * Dashboard Page
@@ -9,12 +11,32 @@ import { UserButton } from "@clerk/nextjs";
  * Protected route that displays user information.
  * Demonstrates authentication state and protected routing.
  */
-export default async function DashboardPage() {
-  const { userId } = await auth();
-  const user = await currentUser();
+export default function DashboardPage() {
+  const { user, isLoaded } = useUser();
 
-  if (!userId) {
-    redirect("/sign-in");
+  useEffect(() => {
+    if (isLoaded && user) {
+      // Identify user in PostHog for analytics
+      identifyUser(user.id, {
+        email: user.emailAddresses[0]?.emailAddress,
+        name: user.fullName,
+      });
+      
+      // Track dashboard view as activation
+      trackUserActivated({ feature: "dashboard_view" });
+    }
+  }, [isLoaded, user]);
+
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-gray-500">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null; // Middleware will handle redirect
   }
 
   return (
@@ -49,7 +71,7 @@ export default async function DashboardPage() {
                 </div>
                 <div>
                   <dt className="text-gray-500">User ID:</dt>
-                  <dd className="text-gray-900 font-mono text-xs">{userId}</dd>
+                  <dd className="text-gray-900 font-mono text-xs">{user?.id}</dd>
                 </div>
               </dl>
             </div>

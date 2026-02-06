@@ -1,14 +1,5 @@
 name: CI
 
-/**
- * GitHub Actions CI Workflow
- * 
- * Runs on every PR and push to master:
- * - TypeScript type checking
- * - ESLint
- * - Unit tests with coverage (80% threshold)
- * - Build verification
- */
 
 on:
   push:

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { stripe } from "@/lib/stripe-server";
 import Stripe from "stripe";
+import { convexUsers } from "@/lib/convex";
 
 /**
  * POST /api/webhooks/stripe
@@ -25,11 +26,20 @@ export async function POST(req: Request) {
     if (!stripe) {
       throw new Error("Stripe not configured");
     }
-    
+
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    if (!webhookSecret) {
+      console.error("Missing STRIPE_WEBHOOK_SECRET");
+      return NextResponse.json(
+        { error: "Server misconfigured" },
+        { status: 500 }
+      );
+    }
+
     const event = stripe.webhooks.constructEvent(
       body,
       signature,
-      process.env.STRIPE_WEBHOOK_SECRET!
+      webhookSecret
     );
 
     console.log(`Processing Stripe webhook: ${event.type}`);
@@ -45,11 +55,11 @@ export async function POST(req: Request) {
           );
 
           // Update user in database with subscription info
-          // await convex.mutation(api.users.updateSubscription, {
-          //   stripeCustomerId: session.customer as string,
-          //   stripeSubscriptionId: subscription.id,
-          //   status: subscription.status,
-          // });
+          await convexUsers.updateSubscription({
+            stripeCustomerId: session.customer as string,
+            stripeSubscriptionId: subscription.id,
+            status: subscription.status,
+          });
 
           console.log(`Subscription created: ${subscription.id}`);
         }
@@ -78,11 +88,11 @@ export async function POST(req: Request) {
         const subscription = event.data.object;
         
         // Update subscription status in database
-        // await convex.mutation(api.users.updateSubscription, {
-        //   stripeCustomerId: subscription.customer as string,
-        //   stripeSubscriptionId: subscription.id,
-        //   status: subscription.status,
-        // });
+        await convexUsers.updateSubscription({
+          stripeCustomerId: subscription.customer as string,
+          stripeSubscriptionId: subscription.id,
+          status: subscription.status,
+        });
 
         console.log(`Subscription updated: ${subscription.id}, status: ${subscription.status}`);
         break;
@@ -92,11 +102,11 @@ export async function POST(req: Request) {
         const subscription = event.data.object;
         
         // Mark subscription as cancelled in database
-        // await convex.mutation(api.users.updateSubscription, {
-        //   stripeCustomerId: subscription.customer as string,
-        //   stripeSubscriptionId: subscription.id,
-        //   status: "canceled",
-        // });
+        await convexUsers.updateSubscription({
+          stripeCustomerId: subscription.customer as string,
+          stripeSubscriptionId: subscription.id,
+          status: "canceled",
+        });
 
         console.log(`Subscription cancelled: ${subscription.id}`);
         break;

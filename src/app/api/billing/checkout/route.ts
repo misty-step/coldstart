@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 import { createCheckoutSession, isStripeConfigured } from "@/lib/stripe-server";
+import { convexUsers, isValidAppUrl } from "@/lib/convex";
 
 /**
  * Checkout Session API
@@ -37,8 +38,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // TODO: Fetch customerId from Convex based on userId
-    const customerId = undefined;
+    if (!isValidAppUrl(successUrl) || !isValidAppUrl(cancelUrl)) {
+      return NextResponse.json(
+        { error: "Invalid redirect URL" },
+        { status: 400 }
+      );
+    }
+
+    const user = await convexUsers.getByClerkId(userId);
+    const customerId = user?.stripeCustomerId;
 
     const session = await createCheckoutSession({
       customerId,

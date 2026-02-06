@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 import { createPortalSession, isStripeConfigured } from "@/lib/stripe-server";
+import { convexUsers, isValidAppUrl } from "@/lib/convex";
 
 /**
  * Customer Portal API
@@ -37,10 +38,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // TODO: Fetch customerId from Convex based on userId
-    // This is a placeholder - in production, look up the Stripe customer ID
-    // associated with the authenticated user
-    const customerId = body.customerId;
+    if (!isValidAppUrl(returnUrl)) {
+      return NextResponse.json(
+        { error: "Invalid returnUrl" },
+        { status: 400 }
+      );
+    }
+
+    const user = await convexUsers.getByClerkId(userId);
+    const customerId = user?.stripeCustomerId;
 
     if (!customerId) {
       return NextResponse.json(

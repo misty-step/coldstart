@@ -1,5 +1,6 @@
+import type { MutationCtx } from "convex/server";
 import { v } from "convex/values";
-import { query, mutation } from "../_generated/server";
+import { query, internalMutation } from "../_generated/server";
 
 /**
  * User queries and mutations
@@ -62,73 +63,89 @@ export const getById = query({
   },
 });
 
-/**
- * Create a new user (called during sign-up via Clerk webhook)
- */
-export const create = mutation({
-  args: {
-    clerkId: v.string(),
-    email: v.string(),
-    name: v.optional(v.string()),
-    imageUrl: v.optional(v.string()),
-  },
+type CreateUserArgs = {
+  clerkId: string;
+  email: string;
+  name?: string;
+  imageUrl?: string;
+};
+
+const createUserArgs = {
+  clerkId: v.string(),
+  email: v.string(),
+  name: v.optional(v.string()),
+  imageUrl: v.optional(v.string()),
+};
+
+const createUser = async (ctx: MutationCtx, args: CreateUserArgs) => {
+  const existing = await ctx.db
+    .query("users")
+    .withIndex("by_clerkId", (q) => q.eq("clerkId", args.clerkId))
+    .unique();
+
+  if (existing) {
+    return existing._id;
+  }
+
+  const now = Date.now();
+  const user = {
+    clerkId: args.clerkId,
+    email: args.email,
+    createdAt: now,
+    updatedAt: now,
+    ...(args.name !== undefined ? { name: args.name } : {}),
+    ...(args.imageUrl !== undefined ? { imageUrl: args.imageUrl } : {}),
+  };
+  return await ctx.db.insert("users", user);
+};
+
+export const createInternal = internalMutation({
+  args: createUserArgs,
   returns: v.id("users"),
-  handler: async (ctx, args) => {
-    // Check if user already exists
-    const existing = await ctx.db
-      .query("users")
-      .withIndex("by_clerkId", (q) => q.eq("clerkId", args.clerkId))
-      .unique();
-
-    if (existing) {
-      return existing._id;
-    }
-
-    const now = Date.now();
-    const userId = await ctx.db.insert("users", {
-      clerkId: args.clerkId,
-      email: args.email,
-      name: args.name,
-      imageUrl: args.imageUrl,
-      createdAt: now,
-      updatedAt: now,
-    });
-    return userId;
-  },
+  handler: createUser,
 });
 
-/**
- * Update user profile
- */
-export const update = mutation({
-  args: {
-    clerkId: v.string(),
-    name: v.optional(v.string()),
-    imageUrl: v.optional(v.string()),
-  },
+type UpdateUserArgs = {
+  clerkId: string;
+  name?: string;
+  imageUrl?: string;
+};
+
+const updateUserArgs = {
+  clerkId: v.string(),
+  name: v.optional(v.string()),
+  imageUrl: v.optional(v.string()),
+};
+
+const updateUser = async (ctx: MutationCtx, args: UpdateUserArgs) => {
+  const user = await ctx.db
+    .query("users")
+    .withIndex("by_clerkId", (q) => q.eq("clerkId", args.clerkId))
+    .unique();
+
+  if (user === null) {
+    throw new Error("User not found");
+  }
+
+  const update = {
+    updatedAt: Date.now(),
+    ...(args.name !== undefined ? { name: args.name } : {}),
+    ...(args.imageUrl !== undefined ? { imageUrl: args.imageUrl } : {}),
+  };
+  await ctx.db.patch(user._id, update);
+  return true;
+};
+
+export const updateInternal = internalMutation({
+  args: updateUserArgs,
   returns: v.boolean(),
-  handler: async (ctx, args) => {
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_clerkId", (q) => q.eq("clerkId", args.clerkId))
-      .unique();
-
-    if (user === null) {
-      throw new Error("User not found");
-    }
-
-    await ctx.db.patch(user._id, {
-      ...args,
-      updatedAt: Date.now(),
-    });
-    return true;
-  },
+  handler: updateUser,
 });
 
 /**
  * Update Stripe customer ID
  */
-export const updateStripeCustomerId = mutation({
+export const updateStripeCustomerId = internalMutation({
   args: {
     clerkId: v.string(),
     stripeCustomerId: v.string(),
@@ -155,7 +172,7 @@ export const updateStripeCustomerId = mutation({
 /**
  * Update subscription status
  */
-export const updateSubscription = mutation({
+export const updateSubscription = internalMutation({
   args: {
     stripeCustomerId: v.string(),
     stripeSubscriptionId: v.optional(v.string()),
@@ -171,7 +188,10 @@ export const updateSubscription = mutation({
       .unique();
 
     if (user === null) {
-      throw new Error("User not found");
+      console.warn(
+        `updateSubscription: No user found for stripeCustomerId ${args.stripeCustomerId}`
+      );
+      return false;
     }
 
     await ctx.db.patch(user._id, {
@@ -183,23 +203,26 @@ export const updateSubscription = mutation({
   },
 });
 
-/**
- * Delete user (called on Clerk user.deleted webhook)
- */
-export const remove = mutation({
-  args: { clerkId: v.string() },
+type RemoveUserArgs = { clerkId: string };
+
+const removeUserArgs = { clerkId: v.string() };
+
+const removeUser = async (ctx: MutationCtx, args: RemoveUserArgs) => {
+  const user = await ctx.db
+    .query("users")
+    .withIndex("by_clerkId", (q) => q.eq("clerkId", args.clerkId))
+    .unique();
+
+  if (user === null) {
+    return false;
+  }
+
+  await ctx.db.delete(user._id);
+  return true;
+};
+
+export const removeInternal = internalMutation({
+  args: removeUserArgs,
   returns: v.boolean(),
-  handler: async (ctx, args) => {
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_clerkId", (q) => q.eq("clerkId", args.clerkId))
-      .unique();
-
-    if (user === null) {
-      return false;
-    }
-
-    await ctx.db.delete(user._id);
-    return true;
-  },
+  handler: removeUser,
 });

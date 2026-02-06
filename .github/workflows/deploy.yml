@@ -1,11 +1,5 @@
 name: Deploy
 
-/**
- * GitHub Actions Deploy Workflow
- * 
- * Deploys to production on push to master.
- * Includes environment validation.
- */
 
 on:
   push:

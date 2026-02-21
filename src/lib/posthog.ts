@@ -8,7 +8,7 @@ import posthog from "posthog-js";
  */
 
 const POSTHOG_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY;
-const POSTHOG_HOST = process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://us.i.posthog.com";
+const POSTHOG_HOST = process.env.NEXT_PUBLIC_POSTHOG_HOST || "/ingest";
 
 /**
  * Initialize PostHog (called once in provider)
@@ -23,9 +23,11 @@ export function initPostHog(): void {
 
   posthog.init(POSTHOG_KEY, {
     api_host: POSTHOG_HOST,
+    ui_host: "https://us.posthog.com",
     person_profiles: "identified_only",
     capture_pageview: true,
     capture_pageleave: true,
+    respect_dnt: true,
     loaded: (posthog) => {
       if (process.env.NODE_ENV === "development") {
         // Debug mode in development

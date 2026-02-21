@@ -12,6 +12,7 @@ const isPublicRoute = createRouteMatcher([
   "/sign-in(.*)",
   "/sign-up(.*)",
   "/api/webhooks/(.*)",
+  "/ingest(.*)", // PostHog analytics proxy
 ]);
 
 export default clerkMiddleware(async (auth, request) => {

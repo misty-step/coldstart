@@ -11,6 +11,7 @@ Sentry.init({
 
   // Adjust this value in production to control sampling
   tracesSampleRate: process.env.NODE_ENV === "production" ? 0.1 : 1.0,
+  sendDefaultPii: false,
 
   // Sample rate for profiling
   profilesSampleRate: process.env.NODE_ENV === "production" ? 0.1 : 1.0,
